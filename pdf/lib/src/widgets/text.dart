@@ -613,7 +613,40 @@ class RichText extends Widget {
             .split('\n');
 
         for (var line = 0; line < spanLines.length; line++) {
-          for (var word in spanLines[line].split(RegExp(r'\s'))) {
+          final codes = spanLines[line].codeUnits;
+          int index = 0;
+          String word = '';
+          bool shouldAddSpace = false;
+          while (index < codes.length) {
+//          for (var word in spanLines[line].split(RegExp(r'\s'))) {
+            final code = codes[index];
+            if (code > 255) {
+              if (word.isNotEmpty) {
+                index--;
+              } else {
+                word = spanLines[line][index];
+              }
+              shouldAddSpace = false;
+            } else if ([32, 9, 10, 13].contains(code)) {
+              if (code == 32) word += ' ';
+              if (word.isEmpty) {
+                index++;
+                continue;
+              }
+              shouldAddSpace = true;
+            } else {
+              word += spanLines[line][index];
+              if (index != codes.length - 1) {
+                index++;
+                continue;
+              }
+            }
+            index++;
+
+            if (index == codes.length) {
+              shouldAddSpace = true;
+            }
+
             if (word.isEmpty) {
               offsetX += space.advanceWidth * style.wordSpacing! +
                   style.letterSpacing!;
@@ -684,9 +717,16 @@ class RichText extends Widget {
               ),
             );
 
-            offsetX += metrics.advanceWidth +
-                space.advanceWidth * style.wordSpacing! +
-                style.letterSpacing!;
+            if (shouldAddSpace) {
+              offsetX += metrics.advanceWidth +
+                  space.advanceWidth * style.wordSpacing! +
+                  style.letterSpacing!;
+            } else {
+              offsetX += metrics.advanceWidth +
+                  style.letterSpacing!;
+            }
+
+            word = '';
           }
 
           if (softWrap! && line < spanLines.length - 1) {
