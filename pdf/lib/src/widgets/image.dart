@@ -97,6 +97,13 @@ class Image extends Widget {
   @override
   void layout(Context context, BoxConstraints constraints,
       {bool parentUsesSize = false}) {
+    /// An Image should not be span into two pages, the max height of an image
+    /// is equals to [PdfPageFormat.availableHeight] - 0.1, where 0.1 is used to avoid
+    /// some precision issues such as:
+    /// Exception: Widget won't fit into the page as its height (728.503937007874)
+    /// exceed a page height (728.5039370078739). You probably need a SpanningWidget
+    /// or use a single page layout
+    constraints = constraints.copyWith(maxHeight: context.page.pageFormat.availableHeight - 0.1);
     final w = width ??
         (constraints.hasBoundedWidth
             ? constraints.maxWidth
