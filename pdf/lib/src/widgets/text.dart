@@ -428,11 +428,15 @@ class TextSpan extends InlineSpan {
     TextStyle? style,
     this.text,
     double baseline = 0,
+    this.firstLineIndent = 0,
     this.children,
     AnnotationBuilder? annotation,
   }) : super(style: style, baseline: baseline, annotation: annotation);
 
   final String? text;
+  /// text indent in first line
+  /// 1 unit = width of 1 chinese character(or 2 letter) + word spacing + letter spacing
+  final int firstLineIndent;
 
   final List<InlineSpan>? children;
 
@@ -604,6 +608,11 @@ class RichText extends Widget {
 
         final font = style!.font!.getFont(context)!;
 
+        if (span.firstLineIndent > 0) {
+          final indent = font.stringMetrics('一') * (style.fontSize! * textScaleFactor);
+          offsetX += (indent.advanceWidth * style.wordSpacing! + style.letterSpacing!) * span.firstLineIndent;
+        }
+
         final space =
             font.stringMetrics(' ') * (style.fontSize! * textScaleFactor);
 
@@ -614,9 +623,9 @@ class RichText extends Widget {
 
         for (var line = 0; line < spanLines.length; line++) {
           final codes = spanLines[line].codeUnits;
-          int index = 0;
-          String word = '';
-          bool shouldAddSpace = false;
+          var index = 0;
+          var word = '';
+          var shouldAddSpace = false;
           while (index < codes.length) {
 //          for (var word in spanLines[line].split(RegExp(r'\s'))) {
             final code = codes[index];
